@@ -14,3 +14,26 @@ From June 19, 2019 to November 18, 2019 **participants may submit their algorith
 **By November 18, 2019, participants may designate one of their existing submissions as the submission to be used for the evaluation against the test set.** If no submission is specifically designated, the most recent submission will be used for Phase 1 evaluation.
 
 Solutions will be evaluated between November 19, 2019 and December 18, 2019 by scoring submissions against the test data set. On December 19, 2019 Phase 1 scores will be released and the 10 teams with the highest score on the test set will be invited to continue with Phase 2 of the Leaders Prize.
+
+## Submission Instructions
+
+A submission consists of a Docker container.
+
+To build the container, run `` docker build -t image_name . `` in the same directory as the Dockerfile.
+
+Then, to test running the submission locally, run this command:
+
+```
+docker run \
+  -v $DATASET_PATH:/usr/local/dataset/:ro \
+  -v $OUTPUT_PATH:/usr/local/ \
+  --name container_name \
+  image_name
+```
+
+where ``$DATASET_PATH`` is the folder with the dataset on your local machine and ``$OUTPUT_PATH`` is where you want to save the
+predictions file.
+
+To submit your Docker container to the leaderboard, you will first need to save it as a tar file using this command:
+
+``docker save -o tar_file_name.tar image_name``
