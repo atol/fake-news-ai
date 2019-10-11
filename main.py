@@ -1,6 +1,6 @@
 import json
 import os
-import random
+from classifiers import *
 
 # These are the file paths where the validation/test set will be mounted (read only)
 # into your Docker container.
@@ -10,19 +10,17 @@ ARTICLES_FILEPATH = '/usr/local/dataset/articles'
 # This is the filepath where the predictions should be written to.
 PREDICTIONS_FILEPATH = '/usr/local/predictions.txt'
 
-# Weighted random selection based on probability of label in training set
-def weighted_random():
-    label = [0] * 50 + [1] * 40 + [2] * 10
-    return random.choice(label)
-
 if __name__ == '__main__':
 # Read in the metadata file.
     with open(METADATA_FILEPATH, 'r') as f:
         claims = json.load(f)
+    
+    classifiers = [classify_weighted_random, classify_claim_len]
 
     # Create a predictions file.
     print('\nWriting predictions to:', PREDICTIONS_FILEPATH)
     with open(PREDICTIONS_FILEPATH, 'w') as f:
         for claim in claims:
-            f.write('%d,%d\n' % (claim['id'], weighted_random()) )
+            prediction = voting_classifier(claim, classifiers)
+            f.write('%d,%d\n' % (claim['id'], prediction) )
     print('Finished writing predictions.')
