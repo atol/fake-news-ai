@@ -1,17 +1,16 @@
 import random
+import pickle
 from statistics import mode
 
-TRUE = 2
-PARTLY = 1
-FALSE = 0
+claimants = pickle.load( open( "preprocessing/labelled_claimants.p", "rb" ) )
 
 def classify_uniform_random(cl): return random.randint(0, 2)
-def classify_all_true(cl): return TRUE
-def classify_all_partly(cl): return PARTLY
-def classify_all_false(cl): return FALSE
+def classify_all_true(cl): return 2
+def classify_all_partly(cl): return 1
+def classify_all_false(cl): return 0
 
 def classify_weighted_random(cl):
-    result = [FALSE] * 50 + [PARTLY] * 40 + [TRUE] * 10
+    result = [0] * 50 + [1] * 40 + [2] * 10
     return random.choice(result)
 
 # false:  {'min': 15, 'max': 7251, 'mean': 142.4341252699784, 'median': 101.0, 'pstdev': 252.27116040305341}
@@ -20,11 +19,11 @@ def classify_weighted_random(cl):
 def classify_claim_len(cl):
     size = len(cl['claim'])
     if size >= (142.34 + 140.85) / 2:
-        return TRUE
+        return 2
     elif size >= (1440.85 + 124.96) / 2:
-        return PARTLY
+        return 1
     else:
-        return FALSE
+        return 0
 
 # false:  {'min': 2, 'max': 66, 'mean': 5.262688984881209, 'median': 4.0, 'pstdev': 4.43623540426079}
 # partly: {'min': 2, 'max': 41, 'mean': 4.841574949620214, 'median': 4, 'pstdev': 3.2703837621469978}
@@ -32,11 +31,11 @@ def classify_claim_len(cl):
 def classify_related_count(cl):
     size = len(cl['related_articles'])
     if size >= (5.26 + 4.84) / 2:
-        return TRUE
+        return 2
     elif size >= (4.84 + 4.40) / 2:
-        return PARTLY
+        return 1
     else:
-        return FALSE
+        return 0
 
 # Total # of claims:
 #    0=7408, 1=6451, 2=1696
@@ -50,15 +49,19 @@ def classify_related_count(cl):
 def classify_word_count(cl):
     size = len(cl['claim'].split())
     if size >= (5.26 + 4.84) / 2:
-        return TRUE
+        return 2
     elif size >= (4.84 + 4.40) / 2:
-        return PARTLY
+        return 1
     else:
-        return FALSE
+        return 0
+
+def classify_claimant(cl):
+    if cl['claimant'] in claimants:
+        return claimants[cl['claimant']]
+    else:
+        return 0
 
 def voting_classifier(claim, classifiers):
-    votes = []
-    result = None
     # Each classifier returns a 'vote' for the claim's label
     votes = [clf(claim) for clf in classifiers]
     # Pick the most frequently voted label

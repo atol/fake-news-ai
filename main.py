@@ -14,13 +14,11 @@ if __name__ == '__main__':
 # Read in the metadata file.
     with open(METADATA_FILEPATH, 'r') as f:
         claims = json.load(f)
-    
-    classifiers = [classify_weighted_random, classify_claim_len]
 
     # Create a predictions file.
     print('\nWriting predictions to:', PREDICTIONS_FILEPATH)
     with open(PREDICTIONS_FILEPATH, 'w') as f:
         for claim in claims:
-            prediction = voting_classifier(claim, classifiers)
+            prediction = classify_claimant(claim)
             f.write('%d,%d\n' % (claim['id'], prediction) )
     print('Finished writing predictions.')
