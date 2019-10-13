@@ -2,7 +2,8 @@ import random
 import pickle
 from statistics import mode
 
-claimants = pickle.load( open( "preprocessing/labelled_claimants.p", "rb" ) )
+fnc_claimants = pickle.load( open( "preprocessing/labelled_claimants.p", "rb" ) )
+fnc_article_ids = pickle.load( open( "preprocessing/labelled_article_ids.p", "rb" ) )
 
 def classify_uniform_random(cl): return random.randint(0, 2)
 def classify_all_true(cl): return 2
@@ -56,10 +57,23 @@ def classify_word_count(cl):
         return 0
 
 def classify_claimant(cl):
-    if cl['claimant'] in claimants:
-        return claimants[cl['claimant']]
+    if cl['claimant'] in fnc_claimants:
+        return fnc_claimants[cl['claimant']]
     else:
         return 0
+    
+def classify_related_article_id(cl):
+    related = []
+    for article in cl['related_articles']:
+        if article in fnc_article_ids:
+            related.append(fnc_article_ids[article])
+        else:
+            return 0
+    try:
+        result = mode(related)
+    except:
+        result = min(related)
+    return result
 
 def voting_classifier(claim, classifiers):
     # Each classifier returns a 'vote' for the claim's label
