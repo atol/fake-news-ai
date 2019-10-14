@@ -1,0 +1,14 @@
+__pycache__
+.ipynb_checkpoints
+.vscode
+.git
+.gitignore
+venv
+dataset
+answer
+notebooks
+submissions
+test
+*.md
+*.zip
+*.tar
