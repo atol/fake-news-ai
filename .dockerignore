@@ -3,12 +3,11 @@ __pycache__
 .vscode
 .git
 .gitignore
+README.md
+Dockerfile
 venv
 dataset
 answer
 notebooks
 submissions
 test
-*.md
-*.zip
-*.tar

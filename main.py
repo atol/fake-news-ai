@@ -15,10 +15,12 @@ if __name__ == '__main__':
     with open(METADATA_FILEPATH, 'r') as f:
         claims = json.load(f)
 
+    classifiers = [classify_weighted_random, classify_claim_len, classify_related_count, classify_word_count, classify_claimant, classify_related_article_id]
+
     # Create a predictions file.
     print('\nWriting predictions to:', PREDICTIONS_FILEPATH)
     with open(PREDICTIONS_FILEPATH, 'w') as f:
         for claim in claims:
-            prediction = classify_claimant(claim)
+            prediction = weighted_voting_classifier(claim, classifiers)
             f.write('%d,%d\n' % (claim['id'], prediction) )
     print('Finished writing predictions.')

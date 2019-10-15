@@ -1,10 +1,8 @@
-app/
-answer/
-dataset/
-submissions/
-__pycache__/
+__pycache__
 .ipynb_checkpoints
 .vscode
-*.zip
-*.txt
-*.tar
+venv
+dataset
+answer
+submissions
+test

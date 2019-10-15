@@ -1,9 +1,10 @@
 import random
 import pickle
+import numpy as np
 from statistics import mode
 
-fnc_claimants = pickle.load( open( "preprocessing/labelled_claimants.p", "rb" ) )
-fnc_article_ids = pickle.load( open( "preprocessing/labelled_article_ids.p", "rb" ) )
+fnc_claimants = pickle.load( open( "/usr/src/preprocessing/labelled_claimants.p", "rb" ) )
+fnc_article_ids = pickle.load( open( "/usr/src/preprocessing/labelled_article_ids.p", "rb" ) )
 
 def classify_uniform_random(cl): return random.randint(0, 2)
 def classify_all_true(cl): return 2
@@ -85,3 +86,13 @@ def voting_classifier(claim, classifiers):
     except:
         result = min(votes)
     return result
+
+def softmax(x):
+    return np.exp(x) / sum(np.exp(x))
+
+def weighted_voting_classifier(claim, classifiers):
+    candidates = [clf(claim) for clf in classifiers]
+    weights = [0.3315, 0.2449, 0.2756, 0.0697, 0.5949, 0.9587] # based on f1 scores
+    norm_weights = softmax(weights)
+    result = np.random.choice(candidates, 1, p=norm_weights)
+    return result[0]

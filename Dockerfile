@@ -1,6 +1,8 @@
-FROM python:3
+FROM continuumio/miniconda3
+
+RUN conda install --yes \
+    numpy==1.17.2 
 
 COPY . /usr/src/
-RUN pip install -r /usr/src/requirements.txt
 
 CMD [ "python3", "/usr/src/main.py" ]
