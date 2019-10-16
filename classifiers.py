@@ -3,8 +3,8 @@ import pickle
 import numpy as np
 from statistics import mode
 
-fnc_claimants = pickle.load( open( "/usr/src/preprocessing/labelled_claimants.p", "rb" ) )
-fnc_article_ids = pickle.load( open( "/usr/src/preprocessing/labelled_article_ids.p", "rb" ) )
+fnc_claimants = pickle.load( open( "preprocessing/labelled_claimants.p", "rb" ) )
+fnc_article_ids = pickle.load( open( "preprocessing/labelled_article_ids.p", "rb" ) )
 
 def classify_uniform_random(cl): return random.randint(0, 2)
 def classify_all_true(cl): return 2
@@ -92,7 +92,7 @@ def softmax(x):
 
 def weighted_voting_classifier(claim, classifiers):
     candidates = [clf(claim) for clf in classifiers]
-    weights = [0.3315, 0.2449, 0.2756, 0.0697, 0.5949, 0.9587] # based on f1 scores
+    weights = [0.0074, 0.0151, 0.0039, 0.4940, 0.9449] # based on matthews score
     norm_weights = softmax(weights)
     result = np.random.choice(candidates, 1, p=norm_weights)
     return result[0]
