@@ -48,4 +48,3 @@ if __name__ == '__main__':
     
     # Compute results
     print("\nF1 score:", f1(claims))
-    print("\nMatthews correlation coefficient:", mcc(claims))
