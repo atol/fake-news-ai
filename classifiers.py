@@ -15,27 +15,22 @@ TRUE = 2
 
 # Looked at the claims made by each claimant in the training data and
 # tallied the number of true, partly, and false claims made by each claimant.
-# Each claimant was assigned a label of 0, 1, 2 depending on whether the majority 
-# of their claims were false, true or partly. In the event of a tie, the lower
-# value label (0 < 1 < 2) was chosen.
-# TODO: Use a probability distribution instead?
-# TODO: Give some rating to anonymous claims
+# Each claimant was assigned a label of 0, 1, 2 depending on whether their
+# claims were, on average, most likely to be false, true or partly.
 fnc_claimants = pickle.load( open( "input/train_claimants.p", "rb" ) )
 
 # Looked at the related_article field of each claim in the training data. 
 # For each article in the claim's related articles, checked to see which other
 # claims had cited that article. Then looked at whether the associated claims 
 # were labelled false, partly or true. Each article_id was assigned a label of
-# 0, 1 or 2 depending on whether the majority of the claims citing the article
-# was labelled false, partly or true. In the event of a tie, the lower
-# value label (0 < 1 < 2) was chosen.
-# TODO: Use a probability distribution instead?
+# 0, 1 or 2 depending on whether the claims citing the article were, on average,
+# most likely to be false, partly or true.
 fnc_article_ids = pickle.load( open( "input/train_article_ids.p", "rb" ) )
 
 # Get the list of classifiers
 def get_classifiers():
-    classifiers = [ classify_weighted_random, classify_claim_len, classify_related_count, 
-                    classify_word_count, classify_claimant, classify_related_article_id ]
+    classifiers = [ classify_claim_len, classify_related_count, classify_word_count,
+                    classify_claimant, classify_related_article_id ]
     return classifiers
 
 # Get the weights for the classifiers
@@ -126,17 +121,17 @@ def print_conf(title, classifier):
     print(f'  right: {right} ({100*right/len(claims):.2f}%)')
     print(f'  wrong: {wrong} ({100*wrong/len(claims):.2f}%)')
 
-def classify_uniform_random(cl): return random.randint(0, 2)
-def classify_all_true(cl): return 2
-def classify_all_partly(cl): return 1
-def classify_all_false(cl): return 0
+def classify_uniform_random(): return random.randint(0, 2)
+def classify_all_true(): return 2
+def classify_all_partly(): return 1
+def classify_all_false(): return 0
 
 # Randomly chooses a number from (0, 1, 2) corresponding to the (false, partly, true) label.
 # Each label has a weight determined by its percentage in the training data.
 # False claims: 47.62%
 # Partly claims: 41.47%
 # True claims: 10.90%
-def classify_weighted_random(cl):
+def classify_weighted_random():
     pred = [0] * 48 + [1] * 41 + [2] * 11
     return random.choice(pred)
 
@@ -189,10 +184,9 @@ def classify_claimant(cl):
     if cl['claimant'] in fnc_claimants:
         return fnc_claimants[cl['claimant']]
     # Otherwise, if the claimant was not seen in the training data,
-    # assign 0 (false) because it's the most frequently occurring label
-    # TODO: Return probability distribution?
+    # return weighted random value
     else:
-        return 0
+        return classify_weighted_random()
     
 # Returns 0, 1, 2 depending on the article IDs of the claim's related articles
 def classify_related_article_id(cl):
@@ -204,10 +198,9 @@ def classify_related_article_id(cl):
         if article in fnc_article_ids:
             related.append(fnc_article_ids[article])
         # Otherwise, if the article was not seen in the training data,
-        # assign 0 (false) because it's the most frequently occuring label
-        # TODO: Return probability distribution?
+        # return weighted random value
         else:
-            return 0
+            return classify_weighted_random()
     # Return 0, 1, 2 depending on whether the majority of the claim's
     # related articles are labeled false, partly or true
     # TODO: Use probability distribution?
