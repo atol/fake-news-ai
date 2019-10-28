@@ -20,7 +20,7 @@ TRUE = 2
 # value label (0 < 1 < 2) was chosen.
 # TODO: Use a probability distribution instead?
 # TODO: Give some rating to anonymous claims
-fnc_claimants = pickle.load( open( "input/labelled_claimants.p", "rb" ) )
+fnc_claimants = pickle.load( open( "input/train_claimants.p", "rb" ) )
 
 # Looked at the related_article field of each claim in the training data. 
 # For each article in the claim's related articles, checked to see which other
@@ -30,7 +30,7 @@ fnc_claimants = pickle.load( open( "input/labelled_claimants.p", "rb" ) )
 # was labelled false, partly or true. In the event of a tie, the lower
 # value label (0 < 1 < 2) was chosen.
 # TODO: Use a probability distribution instead?
-fnc_article_ids = pickle.load( open( "input/labelled_article_ids.p", "rb" ) )
+fnc_article_ids = pickle.load( open( "input/train_article_ids.p", "rb" ) )
 
 # Get the list of classifiers
 def get_classifiers():
@@ -41,7 +41,7 @@ def get_classifiers():
 # Get the weights for the classifiers
 def get_weights(classifiers, metric):
     # Load correctly labelled claims from training data
-    with open('input/dev.json', 'r') as f:
+    with open('input/train.json', 'r') as f:
         dev = json.load(f)
     
     # Calculate weights for each classifier according to the given metric
