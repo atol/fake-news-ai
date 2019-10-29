@@ -9,6 +9,9 @@ from statistics import mode
 from sklearn.metrics import f1_score
 from sklearn.metrics import matthews_corrcoef
 
+import textblob
+from textblob import TextBlob
+
 FALSE = 0
 PARTLY = 1
 TRUE = 2
@@ -25,12 +28,12 @@ fnc_claimants = pickle.load( open( "input/train_claimants.p", "rb" ) )
 # were labelled false, partly or true. Each article_id was assigned a label of
 # 0, 1 or 2 depending on whether the claims citing the article were, on average,
 # most likely to be false, partly or true.
-fnc_article_ids = pickle.load( open( "input/train_article_ids.p", "rb" ) )
+# fnc_article_ids = pickle.load( open( "input/train_article_ids.p", "rb" ) )
 
 # Get the list of classifiers
 def get_classifiers():
     classifiers = [ classify_claim_len, classify_related_count, classify_word_count,
-                    classify_claimant, classify_related_article_id ]
+                    classify_claimant, classify_subjectivity, classify_polarity ]
     return classifiers
 
 # Get the weights for the classifiers
@@ -121,17 +124,17 @@ def print_conf(title, classifier):
     print(f'  right: {right} ({100*right/len(claims):.2f}%)')
     print(f'  wrong: {wrong} ({100*wrong/len(claims):.2f}%)')
 
-def classify_uniform_random(): return random.randint(0, 2)
-def classify_all_true(): return 2
-def classify_all_partly(): return 1
-def classify_all_false(): return 0
+def classify_uniform_random(cl): return random.randint(0, 2)
+def classify_all_true(cl): return 2
+def classify_all_partly(cl): return 1
+def classify_all_false(cl): return 0
 
 # Randomly chooses a number from (0, 1, 2) corresponding to the (false, partly, true) label.
 # Each label has a weight determined by its percentage in the training data.
 # False claims: 47.62%
 # Partly claims: 41.47%
 # True claims: 10.90%
-def classify_weighted_random():
+def classify_weighted_random(cl):
     pred = [0] * 48 + [1] * 41 + [2] * 11
     return random.choice(pred)
 
@@ -186,7 +189,7 @@ def classify_claimant(cl):
     # Otherwise, if the claimant was not seen in the training data,
     # return weighted random value
     else:
-        return classify_weighted_random()
+        return classify_weighted_random(cl)
     
 # Returns 0, 1, 2 depending on the article IDs of the claim's related articles
 def classify_related_article_id(cl):
@@ -200,16 +203,35 @@ def classify_related_article_id(cl):
         # Otherwise, if the article was not seen in the training data,
         # return weighted random value
         else:
-            return classify_weighted_random()
-    # Return 0, 1, 2 depending on whether the majority of the claim's
-    # related articles are labeled false, partly or true
-    # TODO: Use probability distribution?
-    try:
-        pred = mode(related)
-    # In the event of a tie, return the lowest value label
-    except:
-        pred = min(related)
-    return pred
+            return classify_weighted_random(cl)
+    # Return average label of the claim's related articles
+    return round(sum(related)/len(related))
+
+# Returns 0, 1 or 2 depending on the claim's subjectivity score
+# Subjectivity score is a float within the range [0.0, 1.0]
+# where 0.0 is very objective and 1.0 is very subjective.
+def classify_subjectivity(cl):
+    claim = TextBlob(cl['claim'])
+    subjectivity = claim.sentiment.subjectivity
+    if subjectivity > 0.75:
+        return 0
+    elif subjectivity < 0.2:
+        return 2
+    else:
+        return 1
+
+# Returns 0, 1 or 2 depending on the claim's polarity score
+# Polarity score is a float within the range [-1.0, 1.0]
+# where -1.0 is very negative and 1.0 is very positive
+def classify_polarity(cl):
+    claim = TextBlob(cl['claim'])
+    polarity = claim.sentiment.polarity
+    if polarity < -0.1:
+        return 0
+    elif polarity >= 0 and polarity <= 0.1:
+        return 2
+    else:
+        return 1
 
 def voting_classifier(claim, classifiers):
     # Each classifier returns a 'vote' for the claim's label
