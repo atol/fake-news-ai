@@ -33,7 +33,7 @@ def mcc(claims):
 if __name__ == '__main__':
     # Set up classifiers and weights
     classifiers = get_classifiers()
-    weights = get_weights(classifiers, eval_f1)
+    weights = get_weights(classifiers, eval_mcc)
 
     # Read in the metadata file
     with open("input/train.json", 'r') as f:

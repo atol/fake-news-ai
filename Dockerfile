@@ -1,7 +1,10 @@
-FROM python:3
+FROM continuumio/miniconda3
+
+RUN conda install --yes \
+    numpy==1.17.2 \
+    pandas==0.25.2 \
+    scikit-learn==0.21.3
 
 COPY . /usr/src/
-
-RUN pip install -r /usr/src/requirements.txt
 
 CMD [ "python3", "/usr/src/main.py" ]

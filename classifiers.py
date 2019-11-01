@@ -30,10 +30,14 @@ fnc_claimants = pickle.load( open( "input/train_claimants.p", "rb" ) )
 # most likely to be false, partly or true.
 # fnc_article_ids = pickle.load( open( "input/train_article_ids.p", "rb" ) )
 
+# Load pre-trained model
+with open('input/clf_nb_claims.pkl', 'rb') as f:
+    clf_nb_claims = pickle.load(f)
+
 # Get the list of classifiers
 def get_classifiers():
     classifiers = [ classify_claim_len, classify_related_count, classify_word_count,
-                    classify_claimant, classify_subjectivity, classify_polarity ]
+                    classify_claimant, classify_nb_claims ]
     return classifiers
 
 # Get the weights for the classifiers
@@ -226,12 +230,23 @@ def classify_subjectivity(cl):
 def classify_polarity(cl):
     claim = TextBlob(cl['claim'])
     polarity = claim.sentiment.polarity
-    if polarity < -0.1:
+    if polarity <= -0.75 or polarity >= 0.75:
         return 0
-    elif polarity >= 0 and polarity <= 0.1:
+    elif polarity >= -0.1 and polarity <= 0.1:
         return 2
     else:
         return 1
+
+# Multinomial Naive Bayes classifier that classifies a claim as 
+# 0, 1 or 2 based on a learned model trained on the claim text
+def classify_nb_claims(cl):
+    # Get the claim from the json entry
+    claim = cl['claim']
+    # Convert to a list to avoid iterable error
+    claim = [claim]
+    # Predict the label using the learned model
+    pred = clf_nb_claims.predict(claim)
+    return pred[0] # pred returns a numpy array of size 1, so get value at index 0
 
 def voting_classifier(claim, classifiers):
     # Each classifier returns a 'vote' for the claim's label
