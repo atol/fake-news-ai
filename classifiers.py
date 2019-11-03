@@ -37,7 +37,7 @@ with open('input/clf_nb_claims.pkl', 'rb') as f:
 # Get the list of classifiers
 def get_classifiers():
     classifiers = [ classify_claim_len, classify_related_count, classify_word_count,
-                    classify_claimant, classify_nb_claims ]
+                    classify_claimant, classify_subjectivity, classify_polarity, classify_nb_claims ]
     return classifiers
 
 # Get the weights for the classifiers
@@ -76,8 +76,7 @@ def eval_f1(claims, classifier):
         pred.append(classifier(cl))
     # f1_score compares the predicted values to the true values
     # average='macro' calculate metrics for each label and find their unweighted mean
-    # labels=np.unique(pred) only shows labels that were predicted at least once (suppresses warning)
-    result = f1_score(true, pred, average='macro', labels=np.unique(pred))
+    result = f1_score(true, pred, average='macro')
     return result
 
 # Takes a classifier and returns its Matthews correlation coefficient (MCC) score

@@ -9,12 +9,12 @@ def f1(claims):
     true = [cl['label'] for cl in claims]
     
     pred = []
-    f = open('output/test_nb.txt', 'r')
+    f = open('output/test.txt', 'r')
     for l in f:
         line = l.strip()
         pred.append(int(line[-1:]))
 
-    result = f1_score(true, pred, average='macro', labels=np.unique(pred))
+    result = f1_score(true, pred, average='macro')
     return result
 
 # Matthews correlation coefficient score for predictions.txt
