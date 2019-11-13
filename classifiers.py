@@ -8,6 +8,7 @@ import numpy as np
 from statistics import mode
 from sklearn.metrics import f1_score
 from sklearn.metrics import matthews_corrcoef
+from sklearn.metrics import accuracy_score
 
 import textblob
 from textblob import TextBlob
@@ -28,16 +29,21 @@ fnc_claimants = pickle.load( open( "input/train_claimants.p", "rb" ) )
 # were labelled false, partly or true. Each article_id was assigned a label of
 # 0, 1 or 2 depending on whether the claims citing the article were, on average,
 # most likely to be false, partly or true.
-# fnc_article_ids = pickle.load( open( "input/train_article_ids.p", "rb" ) )
+fnc_article_ids = pickle.load( open( "input/train_articles1.p", "rb" ) )
 
 # Load pre-trained model
-with open('input/clf_nb_claims.pkl', 'rb') as f:
+with open('input/claims_count_mnb.pkl', 'rb') as f:
     clf_nb_claims = pickle.load(f)
+
+# Load pre-trained model
+with open('input/claimants_tfidf_svm.pkl', 'rb') as f:
+    clf_nb_claimants = pickle.load(f)
 
 # Get the list of classifiers
 def get_classifiers():
     classifiers = [ classify_claim_len, classify_related_count, classify_word_count,
-                    classify_claimant, classify_subjectivity, classify_polarity, classify_nb_claims ]
+                    classify_related_article_id, classify_subjectivity, classify_polarity,
+                    classify_nb_claims, classify_nb_claimants ]
     return classifiers
 
 # Get the weights for the classifiers
@@ -54,12 +60,6 @@ def get_weights(classifiers, metric):
         if w < 0:
             w = 0
         weights.append(w)
-    
-    # F1 score: {'weighted_random': 0.3320465510889827, 'claim_len': 0.24490294435522805, 'related_count': 0.27568939517104935
-    #            'word_count': 0.06978862049083771, 'claimant': 0.5949752273857106, 'related_article_id': 0.9587703259365107}
-    # Matthews correlation coefficient score: 
-    #           {'weighted_random': 0.005098654305867974, 'claim_len': 0.015171210964371292, 'related_count': -0.01516493989932876
-    #            'word_count': 0.003950039080365395, 'claimant': 0.49405385976289373, 'related_article_id': 0.9449845286946165}
 
     return weights
 
@@ -92,6 +92,19 @@ def eval_mcc(claims, classifier):
         pred.append(classifier(cl))
     # matthews_corrcoef compares the predicted values to the true values
     result = matthews_corrcoef(true, pred)
+    return result
+
+def eval_acc(claims, classifier):
+    true = []
+    pred = []
+    # Loop through claims
+    for cl in claims:
+        # Append correct claim label to 'true'
+        true.append(cl['label'])
+        # Append label predicted by classifier to 'pred'
+        pred.append(classifier(cl))
+    # matthews_corrcoef compares the predicted values to the true values
+    result = accuracy_score(true, pred)
     return result
 
 # Computes a confusion matrix for a given classifier and set of claims
@@ -202,7 +215,9 @@ def classify_related_article_id(cl):
         # If the article ID was seen in the training data,
         # return the label associated with the article
         if article in fnc_article_ids:
-            related.append(fnc_article_ids[article])
+            labels = fnc_article_ids[article]
+            score = round(sum(labels)/len(labels))
+            related.append(score)
         # Otherwise, if the article was not seen in the training data,
         # return weighted random value
         else:
@@ -245,6 +260,17 @@ def classify_nb_claims(cl):
     claim = [claim]
     # Predict the label using the learned model
     pred = clf_nb_claims.predict(claim)
+    return pred[0] # pred returns a numpy array of size 1, so get value at index 0
+
+# Multinomial Naive Bayes classifier that classifies a claim as 
+# 0, 1 or 2 based on a learned model trained on the claim text
+def classify_nb_claimants(cl):
+    # Get the claimant from the json entry
+    claimant = cl['claimant']
+    # Convert to a list to avoid iterable error
+    claimant = [claimant]
+    # Predict the label using the learned model
+    pred = clf_nb_claimants.predict(claimant)
     return pred[0] # pred returns a numpy array of size 1, so get value at index 0
 
 def voting_classifier(claim, classifiers):

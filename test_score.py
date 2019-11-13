@@ -33,15 +33,19 @@ def mcc(claims):
 if __name__ == '__main__':
     # Set up classifiers and weights
     classifiers = get_classifiers()
-    weights = get_weights(classifiers, eval_mcc)
-    print(weights)
+    weights = get_weights(classifiers, eval_acc)
+    
+    for i in range(len(classifiers)):
+        print(classifiers[i].__name__)
+        print('weight:', weights[i])
+        print()
 
     # Read in the metadata file
     with open("input/test.json", 'r') as f:
         claims = json.load(f)
     
     # Create a predictions file
-    print('\nWriting predictions to:', "output/test.txt")
+    print('Writing predictions to:', "output/test.txt")
     with open("output/test.txt", 'w') as f:
         for claim in claims:
             f.write('%d,%d\n' % (claim['id'], weighted_voting_classifier(claim, classifiers, weights)))
