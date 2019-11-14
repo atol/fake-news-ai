@@ -2,3 +2,4 @@ pandas
 numpy
 scikit_learn
 textblob
+imbalanced-learn

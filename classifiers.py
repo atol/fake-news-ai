@@ -17,34 +17,34 @@ FALSE = 0
 PARTLY = 1
 TRUE = 2
 
-# Looked at the claims made by each claimant in the training data and
-# tallied the number of true, partly, and false claims made by each claimant.
-# Each claimant was assigned a label of 0, 1, 2 depending on whether their
-# claims were, on average, most likely to be false, true or partly.
-fnc_claimants = pickle.load( open( "input/train_claimants.p", "rb" ) )
+# # Looked at the claims made by each claimant in the training data and
+# # tallied the number of true, partly, and false claims made by each claimant.
+# # Each claimant was assigned a label of 0, 1, 2 depending on whether their
+# # claims were, on average, most likely to be false, true or partly.
+# fnc_claimants = pickle.load( open( "input/train_claimants.p", "rb" ) )
 
-# Looked at the related_article field of each claim in the training data. 
-# For each article in the claim's related articles, checked to see which other
-# claims had cited that article. Then looked at whether the associated claims 
-# were labelled false, partly or true. Each article_id was assigned a label of
-# 0, 1 or 2 depending on whether the claims citing the article were, on average,
-# most likely to be false, partly or true.
-fnc_article_ids = pickle.load( open( "input/train_articles1.p", "rb" ) )
+# # Looked at the related_article field of each claim in the training data. 
+# # For each article in the claim's related articles, checked to see which other
+# # claims had cited that article. Then looked at whether the associated claims 
+# # were labelled false, partly or true. Each article_id was assigned a label of
+# # 0, 1 or 2 depending on whether the claims citing the article were, on average,
+# # most likely to be false, partly or true.
+# fnc_article_ids = pickle.load( open( "input/train_articles1.p", "rb" ) )
 
 # Load pre-trained model
 with open('models/train_claims_nb.pkl', 'rb') as f:
-    clf_nb_claims = pickle.load(f)
+    clf_claims = pickle.load(f)
 
 # Load pre-trained model
 with open('models/train_claimants_nb.pkl', 'rb') as f:
-    clf_nb_claimants = pickle.load(f)
+    clf_claimants = pickle.load(f)
 
 # Get the list of classifiers
 def get_classifiers():
     # classifiers = [ classify_claim_len, classify_related_count, classify_word_count,
     #                 classify_related_article_id, classify_nb_claims, classify_nb_claimants,
     #                 classify_subjectivity, classify_polarity ]
-    classifiers = [ classify_nb_claims, classify_nb_claimants, classify_related_article_id ]
+    classifiers = [ classify_claims, classify_claimants ]
     return classifiers
 
 # Get the weights for the classifiers
@@ -216,24 +216,24 @@ def classify_polarity(cl):
 
 # Multinomial Naive Bayes classifier that classifies a claim as 
 # 0, 1 or 2 based on a learned model trained on the claim text
-def classify_nb_claims(cl):
+def classify_claims(cl):
     # Get the claim from the json entry
     claim = cl['claim']
     # Convert to a list to avoid iterable error
     claim = [claim]
     # Predict the label using the learned model
-    pred = clf_nb_claims.predict(claim)
+    pred = clf_claims.predict(claim)
     return pred[0] # pred returns a numpy array of size 1, so get value at index 0
 
 # Multinomial Naive Bayes classifier that classifies a claim as 
 # 0, 1 or 2 based on a learned model trained on the claim text
-def classify_nb_claimants(cl):
+def classify_claimants(cl):
     # Get the claimant from the json entry
     claimant = cl['claimant']
     # Convert to a list to avoid iterable error
     claimant = [claimant]
     # Predict the label using the learned model
-    pred = clf_nb_claimants.predict(claimant)
+    pred = clf_claimants.predict(claimant)
     return pred[0] # pred returns a numpy array of size 1, so get value at index 0
 
 def voting_classifier(claim, classifiers):
