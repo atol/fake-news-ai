@@ -32,18 +32,19 @@ fnc_claimants = pickle.load( open( "input/train_claimants.p", "rb" ) )
 fnc_article_ids = pickle.load( open( "input/train_articles1.p", "rb" ) )
 
 # Load pre-trained model
-with open('input/claims_count_mnb.pkl', 'rb') as f:
+with open('models/train_claims_nb.pkl', 'rb') as f:
     clf_nb_claims = pickle.load(f)
 
 # Load pre-trained model
-with open('input/claimants_tfidf_svm.pkl', 'rb') as f:
+with open('models/train_claimants_nb.pkl', 'rb') as f:
     clf_nb_claimants = pickle.load(f)
 
 # Get the list of classifiers
 def get_classifiers():
-    classifiers = [ classify_claim_len, classify_related_count, classify_word_count,
-                    classify_related_article_id, classify_subjectivity, classify_polarity,
-                    classify_nb_claims, classify_nb_claimants ]
+    # classifiers = [ classify_claim_len, classify_related_count, classify_word_count,
+    #                 classify_related_article_id, classify_nb_claims, classify_nb_claimants,
+    #                 classify_subjectivity, classify_polarity ]
+    classifiers = [ classify_nb_claims, classify_nb_claimants, classify_related_article_id ]
     return classifiers
 
 # Get the weights for the classifiers
@@ -106,44 +107,6 @@ def eval_acc(claims, classifier):
     # matthews_corrcoef compares the predicted values to the true values
     result = accuracy_score(true, pred)
     return result
-
-# Computes a confusion matrix for a given classifier and set of claims
-def conf_matrix(claims, classifier):
-    conf = [[0,0,0], [0,0,0], [0,0,0]]
-    for cl in claims:
-        prediction = classifier(cl)
-        conf[cl['label']][prediction] += 1
-    return conf
-
-# Takes a classifier and returns a tuple of (right, wrong) predictions
-def eval_conf(claims, classifier):
-    conf = conf_matrix(claims, classifier)
-    right = conf[TRUE][TRUE] + conf[PARTLY][PARTLY] + conf[FALSE][FALSE]
-    wrong = sum(sum(lst) for lst in conf) - right
-    return (right/len(claims)) # TODO: Need to find an evaluation metric
-
-# Prints out a confusion matrix
-def print_conf(title, classifier):
-    conf = conf_matrix(claims, classifier)
-    print()
-    print(title + ':')
-    def fmt(n): return str(n).ljust(5)
-    print('        actual')
-    print('   ' + fmt('t'), fmt('p'), fmt('f'))
-    print('t ', fmt(conf[TRUE][0]), fmt(conf[TRUE][1]), fmt(conf[TRUE][2]))
-    print('p ', fmt(conf[PARTLY][0]), fmt(conf[PARTLY][1]), fmt(conf[PARTLY][2]))
-    print('f ', fmt(conf[FALSE][0]), fmt(conf[FALSE][1]), fmt(conf[FALSE][2]))
-
-    right = conf[TRUE][TRUE] + conf[PARTLY][PARTLY] + conf[FALSE][FALSE]
-    wrong = sum(sum(lst) for lst in conf) - right
-    print()
-    print(f'  right: {right} ({100*right/len(claims):.2f}%)')
-    print(f'  wrong: {wrong} ({100*wrong/len(claims):.2f}%)')
-
-def classify_uniform_random(cl): return random.randint(0, 2)
-def classify_all_true(cl): return 2
-def classify_all_partly(cl): return 1
-def classify_all_false(cl): return 0
 
 # Randomly chooses a number from (0, 1, 2) corresponding to the (false, partly, true) label.
 # Each label has a weight determined by its percentage in the training data.
