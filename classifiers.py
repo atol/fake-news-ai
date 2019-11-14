@@ -31,24 +31,25 @@ TRUE = 2
 # # most likely to be false, partly or true.
 # fnc_article_ids = pickle.load( open( "input/train_articles1.p", "rb" ) )
 
-# Load pre-trained model
+# Load pre-trained claim model
 with open('models/train_claims_nb.pkl', 'rb') as f:
     clf_claims = pickle.load(f)
 
-# Load pre-trained model
+# Load pre-trained claimant model
 with open('models/train_claimants_nb.pkl', 'rb') as f:
     clf_claimants = pickle.load(f)
 
+# Load pre-trained related article model
+with open('models/train_articles_nb.pkl', 'rb') as f:
+    clf_articles = pickle.load(f)
+
 # Get the list of classifiers
 def get_classifiers():
-    # classifiers = [ classify_claim_len, classify_related_count, classify_word_count,
-    #                 classify_related_article_id, classify_nb_claims, classify_nb_claimants,
-    #                 classify_subjectivity, classify_polarity ]
-    classifiers = [ classify_claims, classify_claimants ]
+    classifiers = [ classify_claims, classify_claimants, classify_related_articles ]
     return classifiers
 
 # Get the weights for the classifiers
-def get_weights(classifiers, metric):
+def get_weights(classifiers, metric, articles):
     # Load correctly labelled claims from training data
     with open('input/train.json', 'r') as f:
         dev = json.load(f)
@@ -56,7 +57,7 @@ def get_weights(classifiers, metric):
     # Calculate weights for each classifier according to the given metric
     weights = []
     for clf in classifiers:
-        w = metric(dev, clf)
+        w = metric(dev, clf, articles)
         # If weight is negative, set to 0
         if w < 0:
             w = 0
@@ -66,7 +67,7 @@ def get_weights(classifiers, metric):
 
 # Takes a classifier and returns its F1 score
 # F1 score = (2 * precision * recall) / (precision + recall)
-def eval_f1(claims, classifier):
+def eval_f1(claims, classifier, articles):
     true = []
     pred = []
     # Loop through claims
@@ -74,7 +75,7 @@ def eval_f1(claims, classifier):
         # Append correct claim label to 'true'
         true.append(cl['label'])
         # Append label predicted by classifier to 'pred'
-        pred.append(classifier(cl))
+        pred.append(classifier(cl, articles))
     # f1_score compares the predicted values to the true values
     # average='macro' calculate metrics for each label and find their unweighted mean
     result = f1_score(true, pred, average='macro')
@@ -82,7 +83,7 @@ def eval_f1(claims, classifier):
 
 # Takes a classifier and returns its Matthews correlation coefficient (MCC) score
 # MCC score = 
-def eval_mcc(claims, classifier):
+def eval_mcc(claims, classifier, articles):
     true = []
     pred = []
     # Loop through claims
@@ -90,12 +91,12 @@ def eval_mcc(claims, classifier):
         # Append correct claim label to 'true'
         true.append(cl['label'])
         # Append label predicted by classifier to 'pred'
-        pred.append(classifier(cl))
+        pred.append(classifier(cl, articles))
     # matthews_corrcoef compares the predicted values to the true values
     result = matthews_corrcoef(true, pred)
     return result
 
-def eval_acc(claims, classifier):
+def eval_acc(claims, classifier, articles):
     true = []
     pred = []
     # Loop through claims
@@ -103,7 +104,7 @@ def eval_acc(claims, classifier):
         # Append correct claim label to 'true'
         true.append(cl['label'])
         # Append label predicted by classifier to 'pred'
-        pred.append(classifier(cl))
+        pred.append(classifier(cl, articles))
     # matthews_corrcoef compares the predicted values to the true values
     result = accuracy_score(true, pred)
     return result
@@ -216,7 +217,7 @@ def classify_polarity(cl):
 
 # Multinomial Naive Bayes classifier that classifies a claim as 
 # 0, 1 or 2 based on a learned model trained on the claim text
-def classify_claims(cl):
+def classify_claims(cl, articles):
     # Get the claim from the json entry
     claim = cl['claim']
     # Convert to a list to avoid iterable error
@@ -227,7 +228,7 @@ def classify_claims(cl):
 
 # Multinomial Naive Bayes classifier that classifies a claim as 
 # 0, 1 or 2 based on a learned model trained on the claim text
-def classify_claimants(cl):
+def classify_claimants(cl, articles):
     # Get the claimant from the json entry
     claimant = cl['claimant']
     # Convert to a list to avoid iterable error
@@ -235,6 +236,19 @@ def classify_claimants(cl):
     # Predict the label using the learned model
     pred = clf_claimants.predict(claimant)
     return pred[0] # pred returns a numpy array of size 1, so get value at index 0
+
+# Returns 0, 1, 2 depending on the content of the claim's related articles
+def classify_related_articles(cl, articles):
+    labels = []
+    # Loop through the claim's related articles
+    for article_id in cl['related_articles']:
+        # Get article from dictionary
+        article = articles[str(article_id)]
+        # Predict label
+        pred = clf_articles.predict([article])
+        labels.append(pred[0])
+    # Return average label of the claim's related articles
+    return round(sum(labels)/len(labels))
 
 def voting_classifier(claim, classifiers):
     # Each classifier returns a 'vote' for the claim's label
@@ -250,7 +264,7 @@ def voting_classifier(claim, classifiers):
 def softmax(x):
     return np.exp(x) / sum(np.exp(x))
 
-def weighted_voting_classifier(claim, classifiers, weights):
+def weighted_voting_classifier(claim, classifiers, weights, articles):
     # Initialize label counts
     false_count = 0
     partly_count = 0
@@ -262,7 +276,7 @@ def weighted_voting_classifier(claim, classifiers, weights):
         w = weights[i]
 
         # Get prediction from classifier
-        pred = clf(claim)
+        pred = clf(claim, articles)
 
         # Multiply prediction by weight and add to appropriate tally
         if pred == 0:
