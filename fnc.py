@@ -1,6 +1,5 @@
 import pickle
 import string
-import gensim
 from nltk.tokenize import word_tokenize
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
@@ -20,24 +19,22 @@ def clean_text(line):
     text.append(words)
     return text
 
-def preprocess(line):
+def preprocess(line, tokenizer):
     text = clean_text(line)
-    tokenizer = Tokenizer()
-    tokenizer.fit_on_texts(text)
     sequence = tokenizer.texts_to_sequences(text)
     data = pad_sequences(sequence, maxlen=MAX_SEQUENCE_LENGTH)
     return data
 
-def classify_claim(claim, model):
-    data = preprocess(claim)
+def classify_claim(claim, model, tokenizer):
+    data = preprocess(claim, tokenizer)
     result = model.predict(data)
     return result[0]
 
-def weighted_voting(weights):
+def weighted_voting(result):
     # Calculate votes for each label based on the weights
-    false = 1*weights[0]
-    partly = 1*weights[1]
-    true = 1*weights[2]
+    false = result[0]
+    partly = result[1]
+    true = result[2]
     # Get the label with the most votes
     vote = max([false, partly, true])
     # Return the 'most popular' label
@@ -48,10 +45,10 @@ def weighted_voting(weights):
     else:
         return 2
 
-def make_prediction(entry, model):
+def make_prediction(entry, model, tokenizer):
     # Classify based on claim text
     claim = entry['claim']
-    result_claim = classify_claim(claim, model) # Returns a distribution
+    result_claim = classify_claim(claim, model, tokenizer) # Returns a distribution
     # Get label from voting classifier
     prediction = weighted_voting(result_claim)
     return prediction

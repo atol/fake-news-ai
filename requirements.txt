@@ -2,3 +2,5 @@ pandas
 numpy
 scikit_learn
 imbalanced-learn
+tensorflow
+keras
