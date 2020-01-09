@@ -123,12 +123,12 @@ def classify_weighted_random(cl):
 # true:   {'min': 20, 'max': 5716, 'mean': 124.96403301886792, 'median': 104.0, 'pstdev': 172.86696816567172}
 def classify_claim_len(cl):
     size = len(cl['claim'])
-    if size >= (142.34 + 140.85) / 2:
-        return 2
-    elif size >= (1440.85 + 124.96) / 2:
+    if size >= (142 + 140) / 2:
+        return 0
+    elif size >= (140 + 124) / 2:
         return 1
     else:
-        return 0
+        return 2
 
 # false:  {'min': 2, 'max': 66, 'mean': 5.262688984881209, 'median': 4.0, 'pstdev': 4.43623540426079}
 # partly: {'min': 2, 'max': 41, 'mean': 4.841574949620214, 'median': 4, 'pstdev': 3.2703837621469978}
@@ -136,11 +136,11 @@ def classify_claim_len(cl):
 def classify_related_count(cl):
     size = len(cl['related_articles'])
     if size >= (5.26 + 4.84) / 2:
-        return 2
+        return 0
     elif size >= (4.84 + 4.40) / 2:
         return 1
     else:
-        return 0
+        return 2
 
 # Total # of claims:
 #    0=7408, 1=6451, 2=1696
@@ -154,11 +154,11 @@ def classify_related_count(cl):
 def classify_word_count(cl):
     size = len(cl['claim'].split())
     if size >= (5.26 + 4.84) / 2:
-        return 2
+        return 0
     elif size >= (4.84 + 4.40) / 2:
         return 1
     else:
-        return 0
+        return 2
 
 # Returns 0, 1 or 2 depending on the claimant
 def classify_claimant(cl):
